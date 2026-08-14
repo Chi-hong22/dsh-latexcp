@@ -2,6 +2,8 @@
 
 DeepSeek Harness (DSH) Web 界面 LaTeX 公式复制插件：悬停公式浮现复制按钮，一键复制公式的 TeX 源码。
 
+![悬停公式浮现的复制按钮](picture/image1.png)
+
 ## Overview
 
 DSH 用 KaTeX 渲染公式，渲染结果只适合看，不适合直接复制：框选粘贴得到的是排版碎片。但 KaTeX 在页面 DOM 里保留了每个公式的原始 TeX 源码（隐藏的 `.katex-mathml` 子树中的 `<annotation encoding="application/x-tex">` 节点）。这个插件悬停任意公式时在右上角浮现一个小按钮：
