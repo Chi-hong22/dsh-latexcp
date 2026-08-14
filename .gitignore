@@ -1,0 +1,8 @@
+node_modules/
+.DS_Store
+*.log
+
+# 本地 agent 技能配置（不入库）
+AGENTS.md
+docs/
+/.scratch/
