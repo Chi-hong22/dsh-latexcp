@@ -1,6 +1,6 @@
 {
   "name": "@chi-hong22/dsh-latexcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "DeepSeek Harness Web LaTeX formula copy helper: hover a formula to copy its TeX source as $...$ or \\(...\\), with inline/display delimiters auto-matched",
   "keywords": [
     "dsh",

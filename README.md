@@ -22,7 +22,7 @@ DSH 用 KaTeX 渲染公式，渲染结果只适合看，不适合直接复制：
 
 ## Compatibility
 
-在 `@deepseek-ai/dsh` **0.2.0-rc.2**（npm `latest`）上验证通过，最后验证日期 2026-10-14。上一轮记录是 0.1.0-rc.6（npx 部署快照），升到 0.2.0-rc.2 不需要改代码。
+在 `@deepseek-ai/dsh` **0.2.0-rc.2**（npm `latest`）上验证通过，最后验证日期 2026-10-14。上一轮记录是 0.1.0-rc.6（npx 部署快照）：升到 0.2.0-rc.2 本身不需要改代码，0.1.1 起把样式表的归属标记对齐了官方写法（见下表末行）。
 
 核对过的依赖点（对照 0.2.0-rc.2 的 `dsh-client-modules`、`dsh-package-manifest`、`dsh-client-ui-primitives` 源码，并用 `dsh --profile web --dump-config` 确认组合里有 `ui-latexcp` 行、无 `skippedBundles` 告警）：
 
@@ -33,6 +33,7 @@ DSH 用 KaTeX 渲染公式，渲染结果只适合看，不适合直接复制：
 | bundle 挂载通道 | `dsh.bundle.patch` 仍有效，`cordis.patch.yml` 的 `insert` 出 `ui-latexcp` 行 |
 | KaTeX 渲染 DOM | 仍是 `katex.renderToString` 的默认 `htmlAndMathml` 输出，`.katex-mathml` 的 `annotation[encoding="application/x-tex"]` 与 `.katex-display` 都在 |
 | 主题 token | `--dsw-alias-border-l1/l2`、`--dsw-alias-bg-overlay`、`--dsw-alias-bg-layer-1`、`--dsw-alias-label-primary/secondary`、`--dsw-alias-state-success-primary` 都在 |
+| 插件样式归属 | 官方约定是 `<style data-plugin="<包名>" data-plugin-css="<包名>/<文件名>">`，宿主 `removeOwnedStyles(id)` 按插件 id 兜底回收；本插件自 0.1.1 起按此写法注入 |
 
 插件依赖 KaTeX 渲染 DOM 的两个结构：`.katex-mathml` 里的 `annotation[encoding="application/x-tex"]` 节点（源码保留处）和 `.katex-display` class（行间公式标记）。DSH 大版本如果调整 Markdown/KaTeX 渲染 DOM，可能需要跟着改。
 
