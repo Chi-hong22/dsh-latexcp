@@ -22,11 +22,27 @@ DSH 用 KaTeX 渲染公式，渲染结果只适合看，不适合直接复制：
 
 ## Compatibility
 
-在 `@deepseek-ai/dsh-*` 0.1.0-rc.6（npx 部署快照）上验证过，最后验证日期 2026-08-15。
+在 `@deepseek-ai/dsh` **0.2.0-rc.2**（npm `latest`）上验证通过，最后验证日期 2026-10-14。上一轮记录是 0.1.0-rc.6（npx 部署快照），升到 0.2.0-rc.2 不需要改代码。
+
+核对过的依赖点（对照 0.2.0-rc.2 的 `dsh-client-modules`、`dsh-package-manifest`、`dsh-client-ui-primitives` 源码，并用 `dsh --profile web --dump-config` 确认组合里有 `ui-latexcp` 行、无 `skippedBundles` 告警）：
+
+| 依赖点 | 0.2.0-rc.2 现状 |
+| --- | --- |
+| 客户端模块格式 | `window.__ModuleLoader__.load({ id, factory })` 未变，官方 `dsh-client-ui-*` 插件同一写法 |
+| `dsh.client` 声明 | `platform`（必填）、`inject`、`external`、`immediately`；本插件只用 `platform: "web"` + `inject: []` |
+| bundle 挂载通道 | `dsh.bundle.patch` 仍有效，`cordis.patch.yml` 的 `insert` 出 `ui-latexcp` 行 |
+| KaTeX 渲染 DOM | 仍是 `katex.renderToString` 的默认 `htmlAndMathml` 输出，`.katex-mathml` 的 `annotation[encoding="application/x-tex"]` 与 `.katex-display` 都在 |
+| 主题 token | `--dsw-alias-border-l1/l2`、`--dsw-alias-bg-overlay`、`--dsw-alias-bg-layer-1`、`--dsw-alias-label-primary/secondary`、`--dsw-alias-state-success-primary` 都在 |
 
 插件依赖 KaTeX 渲染 DOM 的两个结构：`.katex-mathml` 里的 `annotation[encoding="application/x-tex"]` 节点（源码保留处）和 `.katex-display` class（行间公式标记）。DSH 大版本如果调整 Markdown/KaTeX 渲染 DOM，可能需要跟着改。
 
 纯浏览器端插件，没有宿主半部，没有服务注入。复制走浏览器 `navigator.clipboard`（用户点击触发）。
+
+### DSH 版本闸门
+
+0.2.0-rc.2 起，profile 导入插件前会拿插件 `peerDependencies` 里 `@deepseek-ai/dsh` 与 `@deepseek-ai/dsh-*` 的声明比运行时版本，对不上的 bundle 会被跳过并记进 `skippedBundles`（跳过，不是启动失败）。豁免写在 profile 的 `compatibility.json`，用 `dsh plugin allow-version` 按「精确包名@版本 + 精确 DSH 版本」授予，插件升级或 DSH 升级都不会继承。
+
+本插件只声明了 `@deepseek-ai/cordis`（不在闸门检查的命名空间里），因此闸门对它不做约束，DSH 升级不会让插件静默消失。这是刻意的：本插件真正依赖的是 KaTeX 渲染 DOM 的内部结构，`peerDependencies` 的版本区间表达不了这种依赖，写窄了只会在 DSH 升版时把插件整块摘掉。`engines.dsh` 字段 DSH 不读，写了也不生效。
 
 ## Install
 
