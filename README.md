@@ -1,6 +1,6 @@
 # dsh-latexcp
 
-DeepSeek Harness (DSH) Web 界面 LaTeX 公式复制插件：悬停公式浮现复制按钮，一键复制公式的 TeX 源码。
+DeepSeek Harness (DSH) Web 界面公式与表格复制插件：悬停 KaTeX 公式浮现按钮，一键复制公式的 TeX 源码；悬停 Markdown 表格，一键把整张表复制成 GFM 表格文本。
 
 ![悬停公式浮现的复制按钮](picture/image1.png)
 
@@ -20,6 +20,23 @@ DSH 用 KaTeX 渲染公式，渲染结果只适合看，不适合直接复制：
 
 如果你经常要把对话里的公式搬进论文、笔记或别的 Markdown 文档，会用到它。
 
+### Markdown 表格复制
+
+悬停对话里的 Markdown 表格时，同一位置的按钮变成 `Markdown`，点一下把整张表（表头 + 全部数据行）复制成 GFM 表格文本：
+
+- 列对齐还原成 `:---` / `:---:` / `---:`（源表没声明对齐的列用 `---`）；
+- 单元格内的粗体、斜体、删除线、行内代码、链接、图片、`<br>` 按 Markdown 语法回写，行内公式按当前默认格式输出；
+- 单元格里的竖线自动转义成 `\|`，换行压成空格（GFM 单元格不能跨行）。
+
+```text
+| 姓名 | 备注 |
+| :--- | :---: |
+| 张三 | a\|b 与 `x` |
+```
+
+只对 Markdown 渲染器产出的表格生效（有 `<thead>` 表头行）；其他 `<table>`（比如文档预览里的表格）不会触发按钮。
+
+
 ## Compatibility
 
 在 `@deepseek-ai/dsh` **0.2.0-rc.2**（npm `latest`）上验证通过，最后验证日期 2026-10-14。上一轮记录是 0.1.0-rc.6（npx 部署快照）：升到 0.2.0-rc.2 本身不需要改代码，0.1.1 起把样式表的归属标记对齐了官方写法（见下表末行）。
@@ -32,10 +49,11 @@ DSH 用 KaTeX 渲染公式，渲染结果只适合看，不适合直接复制：
 | `dsh.client` 声明 | `platform`（必填）、`inject`、`external`、`immediately`；本插件只用 `platform: "web"` + `inject: []` |
 | bundle 挂载通道 | `dsh.bundle.patch` 仍有效，`cordis.patch.yml` 的 `insert` 出 `ui-latexcp` 行 |
 | KaTeX 渲染 DOM | 仍是 `katex.renderToString` 的默认 `htmlAndMathml` 输出，`.katex-mathml` 的 `annotation[encoding="application/x-tex"]` 与 `.katex-display` 都在 |
+| Markdown 表格 DOM | 渲染器产出 `<div class="_tableScroll_…"><table><thead><tr><th>…`，表格必有 `<thead>` 首行；列对齐只在源表声明对齐时写成 th/td 的内联 `text-align`（left/center/right），没声明就没有该样式 |
 | 主题 token | `--dsw-alias-border-l1/l2`、`--dsw-alias-bg-overlay`、`--dsw-alias-bg-layer-1`、`--dsw-alias-label-primary/secondary`、`--dsw-alias-state-success-primary` 都在 |
 | 插件样式归属 | 官方约定是 `<style data-plugin="<包名>" data-plugin-css="<包名>/<文件名>">`，宿主 `removeOwnedStyles(id)` 按插件 id 兜底回收；本插件自 0.1.1 起按此写法注入 |
 
-插件依赖 KaTeX 渲染 DOM 的两个结构：`.katex-mathml` 里的 `annotation[encoding="application/x-tex"]` 节点（源码保留处）和 `.katex-display` class（行间公式标记）。DSH 大版本如果调整 Markdown/KaTeX 渲染 DOM，可能需要跟着改。
+插件依赖 KaTeX 渲染 DOM 的两个结构：`.katex-mathml` 里的 `annotation[encoding="application/x-tex"]` 节点（源码保留处）和 `.katex-display` class（行间公式标记）。表格复制依赖 `<table>` 自带 `<thead>` + `<th>` 这一条（用来排除文档预览等非 Markdown 表格），不认 CSS module 的哈希 class（`_tableScroll_xxx_192` 随时会变），所以 DSH 改版只要还输出标准 `<thead>` 表格就不受影响。DSH 大版本如果调整 Markdown/KaTeX 渲染 DOM，可能需要跟着改。
 
 纯浏览器端插件，没有宿主半部，没有服务注入。复制走浏览器 `navigator.clipboard`（用户点击触发）。
 
@@ -96,6 +114,7 @@ dsh plugin --profile web remove @chi-hong22/dsh-latexcp
 2. 点 LaTeX            # 按当前默认格式复制源码，按钮短暂显示「✓ 已复制」
 3. 点 ▾                # 展开格式菜单：$ … $ / \( … \)（带行内/行间小字说明）
 4. 点其中一项          # 设为默认格式（✓ 标记），再点 LaTeX 即按新格式复制
+5. 悬停 Markdown 表格  # 按钮变成「Markdown」，点一下复制整张 GFM 表格
 ```
 
 初始默认格式是美元符号 `$…$`。行内/行间自动对应：行内公式得单定界符，行间公式得双定界符，两种格式都是。
@@ -105,6 +124,7 @@ dsh plugin --profile web remove @chi-hong22/dsh-latexcp
 没有配置项，也没有环境变量。行为常量在 `lib/client.js` 顶部：
 
 - 输出格式：美元 `$…$`（行内）/ `$$…$$`（行间）；斜杠 `\(…\)`（行内）/ `\[…\]`（行间）；
+- 表格复制的单元格行内公式也按上面选定的格式输出（没有单独的表格格式开关）；
 - `HIDE_GRACE_MS = 250`：鼠标移出公式后按钮保留的宽限期（毫秒），方便把鼠标移上按钮；
 - `RESTORE_LABEL_MS = 1200`：「✓ 已复制」文案恢复为 `LaTeX` 的时间（复制后按钮保持显示，可连续再复制或切换格式）；
 - `FOLLOW_MS = 100`：按钮跟随公式位置的刷新间隔（流式渲染/滚动时位置不漂移）；
@@ -121,6 +141,8 @@ dsh plugin --profile web remove @chi-hong22/dsh-latexcp
 | 现象 | 排查 |
 | --- | --- |
 | 悬停公式没有按钮 | 确认插件已挂载（`dump-config` 看 `ui-latexcp` 行）；公式必须是已渲染完成的 KaTeX 公式（流式输出中的纯文本阶段没有按钮）；打开浏览器控制台看 `dsh-latexcp` 相关报错 |
+| 悬停表格没有按钮 | 只认 Markdown 渲染器产出的表格（带 `<thead>` 表头行）；文档预览、Excel 预览等其他 `<table>` 不触发。代码块里的表格源码也不会触发 |
+| 复制出的表格出现 `\|` | 单元格原文就含竖线，为保持 GFM 合法自动转义；粘进支持 GFM 的编辑器会正常渲染成竖线 |
 | 点复制显示「复制失败」 | 浏览器剪贴板权限（`navigator.clipboard` 需要 secure context 或已授权）；localhost 页面正常，其他场景看控制台 |
 | 粘贴出来的定界符不对 | 确认选的是想要的格式；行内/行间由公式类型决定，块级公式会得到双定界符 |
 | 按钮颜色与主题不搭 | 按钮走 DSH 主题 token（`--dsw-alias-*`），切换明暗主题即跟随；个别 token 缺失时回退中性配色 |
@@ -140,12 +162,19 @@ dsh plugin --profile web remove @chi-hong22/dsh-latexcp
     └── client.js    # 浏览器半部（__ModuleLoader__ 模块格式）
 ```
 
-手动验证清单：悬停浮现按钮、移开宽限期、复制（美元/斜杠两种格式）、行内/行间定界符对应、菜单切换默认格式、「✓ 已复制」后连续再复制、停用插件后按钮与样式全部还原。
+手动验证清单：悬停浮现按钮、移开宽限期、复制（美元/斜杠两种格式）、行内/行间定界符对应、菜单切换默认格式、「✓ 已复制」后连续再复制、停用插件后按钮与样式全部还原；表格侧：悬停表格标签变 `Markdown` 且箭头隐藏、复制结果含对齐标记与转义竖线、单元格内公式跟随当前格式、宽表按钮不超出可见区、从表格移到公式再移回标签正确切换。
 
 纯函数回归验证（Node，不需要浏览器）：
 
 ```powershell
 node .scratch/latexcp/verify.mjs
+```
+
+浏览器端回归（需要 Edge，PowerShell）：
+
+```powershell
+Start-Process "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" -ArgumentList @("--headless=new","--disable-gpu","--no-first-run","--remote-debugging-port=9333","--user-data-dir=$env:TEMP\edge-cdp-profile","about:blank")
+node .scratch/cdp-run.mjs ("file:///" + (Resolve-Path .scratch\table-demo.html).Path.Replace('\','/')) 9333
 ```
 
 发布到 npm 时，把 `name` 换成你自己有权控制的 scope，不要占用 `@deepseek-ai/*` 官方保留命名空间；`repository` 字段已填。
