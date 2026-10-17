@@ -1,14 +1,17 @@
 {
   "name": "@chi-hong22/dsh-latexcp",
-  "version": "0.1.1",
-  "description": "DeepSeek Harness Web LaTeX formula copy helper: hover a formula to copy its TeX source as $...$ or \\(...\\), with inline/display delimiters auto-matched",
+  "version": "0.2.0",
+  "description": "DeepSeek Harness Web copy helper: hover a formula to copy its TeX source as $...$ or \\(...\\), or hover a Markdown table to copy it as a GFM table",
   "keywords": [
     "dsh",
     "dsh-plugin",
     "deepseek-harness",
     "latex",
     "katex",
-    "math"
+    "math",
+    "markdown",
+    "table",
+    "gfm"
   ],
   "license": "MIT",
   "type": "module",
