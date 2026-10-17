@@ -22,11 +22,11 @@ DSH 用 KaTeX 渲染公式，渲染结果只适合看，不适合直接复制：
 
 ### Markdown 表格复制
 
-悬停对话里的 Markdown 表格时，同一位置浮现一个复制图标按钮（不带文字、格式箭头隐藏），点一下把整张表（表头 + 全部数据行）复制成 GFM 表格文本：
+悬停对话里的 Markdown 表格时，同一位置浮现 DSH 官方的复制图标按钮（16×16、无文字、格式箭头隐藏），点一下把整张表（表头 + 全部数据行）复制成 GFM 表格文本：
 
 - 列对齐还原成 `:---` / `:---:` / `---:`（源表没声明对齐的列用 `---`）；
 - 单元格内的粗体、斜体、删除线、行内代码、链接、图片、`<br>` 按 Markdown 语法回写，行内公式按当前默认格式输出；
-- 单元格里的竖线自动转义成 `\|`，换行压成空格（GFM 单元格不能跨行）。
+- 单元格里的竖线自动转义成 `\|`，纯文本里的 `*` 转义成 `\*`（避免粘贴后被当成强调），换行压成空格（GFM 单元格不能跨行）。
 
 ```text
 | 姓名 | 备注 |
@@ -35,6 +35,8 @@ DSH 用 KaTeX 渲染公式，渲染结果只适合看，不适合直接复制：
 ```
 
 只对 Markdown 渲染器产出的表格生效（有 `<thead>` 表头行）；其他 `<table>`（比如文档预览里的表格）不会触发按钮。
+
+**触屏与键盘**：触屏上点表格即浮现按钮、点空白处收起；键盘上 Tab 聚焦宽表的滚动容器会浮现按钮，`Enter` / `Space` 直接复制，`Esc` 收起。按钮隐藏时 `visibility: hidden`，不会成为不可见的 Tab 停靠点。
 
 
 ## Compatibility
@@ -54,6 +56,8 @@ DSH 用 KaTeX 渲染公式，渲染结果只适合看，不适合直接复制：
 | 插件样式归属 | 官方约定是 `<style data-plugin="<包名>" data-plugin-css="<包名>/<文件名>">`，宿主 `removeOwnedStyles(id)` 按插件 id 兜底回收；本插件自 0.1.1 起按此写法注入 |
 
 插件依赖 KaTeX 渲染 DOM 的两个结构：`.katex-mathml` 里的 `annotation[encoding="application/x-tex"]` 节点（源码保留处）和 `.katex-display` class（行间公式标记）。表格复制依赖 `<table>` 自带 `<thead>` + `<th>` 这一条（用来排除文档预览等非 Markdown 表格），不认 CSS module 的哈希 class（`_tableScroll_xxx_192` 随时会变），所以 DSH 改版只要还输出标准 `<thead>` 表格就不受影响。DSH 大版本如果调整 Markdown/KaTeX 渲染 DOM，可能需要跟着改。
+
+表格模式的复制/对勾图标取自 DSH 官方的 `IconCopyOutlineRegular` / `IconCheckOutlineRegular`（16×16、`strokeWidth: 1`，即代码块复制按钮那套），图标以内联 SVG 写进插件，不依赖运行时导出，也不改宿主 DOM。
 
 纯浏览器端插件，没有宿主半部，没有服务注入。复制走浏览器 `navigator.clipboard`（用户点击触发）。
 
@@ -141,7 +145,7 @@ dsh plugin --profile web remove @chi-hong22/dsh-latexcp
 | 现象 | 排查 |
 | --- | --- |
 | 悬停公式没有按钮 | 确认插件已挂载（`dump-config` 看 `ui-latexcp` 行）；公式必须是已渲染完成的 KaTeX 公式（流式输出中的纯文本阶段没有按钮）；打开浏览器控制台看 `dsh-latexcp` 相关报错 |
-| 悬停表格没有按钮 | 只认 Markdown 渲染器产出的表格（带 `<thead>` 表头行）；文档预览、Excel 预览等其他 `<table>` 不触发。代码块里的表格源码也不会触发 |
+| 悬停表格没有按钮 | 只认 Markdown 渲染器产出的表格（带 `<thead>` 表头行）；文档预览、Excel 预览等其他 `<table>` 不触发。代码块里的表格源码也不会触发。触屏点一下表格、键盘 Tab 聚焦宽表也能触发 |
 | 复制出的表格出现 `\|` | 单元格原文就含竖线，为保持 GFM 合法自动转义；粘进支持 GFM 的编辑器会正常渲染成竖线 |
 | 点复制显示「复制失败」 | 浏览器剪贴板权限（`navigator.clipboard` 需要 secure context 或已授权）；localhost 页面正常，其他场景看控制台 |
 | 粘贴出来的定界符不对 | 确认选的是想要的格式；行内/行间由公式类型决定，块级公式会得到双定界符 |
@@ -157,17 +161,19 @@ dsh plugin --profile web remove @chi-hong22/dsh-latexcp
 ├── package.json       # 包声明（dsh.bundle.patch + dsh.client；peerDeps 仅 cordis）
 ├── cordis.patch.yml   # bundle patch：insert ui-latexcp 行（官方挂载通道）
 ├── LICENSE
-└── lib
-    ├── index.js     # 宿主半部（空实现，纯 UI 插件的 Loader 约定）
-    └── client.js    # 浏览器半部（__ModuleLoader__ 模块格式）
+├── lib
+│   ├── index.js     # 宿主半部（空实现，纯 UI 插件的 Loader 约定）
+│   └── client.js    # 浏览器半部（__ModuleLoader__ 模块格式）
+└── tests
+    └── verify.mjs   # 纯函数回归（npm test）
 ```
 
-手动验证清单：悬停浮现按钮、移开宽限期、复制（美元/斜杠两种格式）、行内/行间定界符对应、菜单切换默认格式、「✓ 已复制」后连续再复制、停用插件后按钮与样式全部还原；表格侧：悬停表格出现复制图标且箭头隐藏、滚动时按钮贴着表格可视区、滚出视口后隐藏、复制结果含对齐标记与转义竖线、单元格内公式跟随当前格式、宽表按钮不超出可见区、从表格移到公式再移回按钮形态正确切换。
+手动验证清单：悬停浮现按钮、移开宽限期、复制（美元/斜杠两种格式）、行内/行间定界符对应、菜单切换默认格式、「✓ 已复制」后连续再复制、停用插件后按钮与样式全部还原；表格侧：悬停表格出现官方复制图标且箭头隐藏、滚动时按钮贴着表格可视区、滚出视口后隐藏、触屏点按与键盘聚焦/Enter/Esc 可用、复制结果含对齐标记与转义竖线、纯文本 `*` 转义、单元格内公式跟随当前格式、宽表按钮不超出可见区、从表格移到公式再移回按钮形态正确切换。
 
 纯函数回归验证（Node，不需要浏览器）：
 
 ```powershell
-node .scratch/latexcp/verify.mjs
+npm test                 # 等价于 node tests/verify.mjs
 ```
 
 浏览器端回归（需要 Edge，PowerShell）：
